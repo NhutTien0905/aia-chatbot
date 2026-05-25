@@ -6,6 +6,7 @@ from ..utils.image_parser import extract_text_from_image
 from .chunking import chunk_text
 from .vectorstore import add_documents
 from .bm25 import build_bm25_index
+from .summarizer import summarize_chunks
 from ..config import settings
 
 
@@ -77,7 +78,10 @@ async def process_document(
     if not all_chunks:
         return {"success": False, "error": "No chunks generated", "num_chunks": 0}
 
-    # Step 3: Index into vector store
+    # Step 3: Summarize long chunks for token optimization
+    all_chunks = summarize_chunks(all_chunks)
+
+    # Step 4: Index into vector store
     try:
         num_indexed = add_documents(session_id, all_chunks)
     except Exception as e:

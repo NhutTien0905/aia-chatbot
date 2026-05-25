@@ -35,25 +35,19 @@ async def chat(request: Request, chat_request: ChatRequest):
     chunks = hybrid_search(session_id, question, top_k=5, filter_filenames=selected_files)
 
     # Build citations from retrieved chunks (include source text for tooltips)
+    # IMPORTANT: Keep one citation per chunk in the same order as sent to LLM,
+    # so that [1], [2], [3]... in the LLM response map correctly to citations.
     citations = []
-    seen_sources = set()
     for chunk in chunks:
         metadata = chunk.get("metadata", {})
-        source_key = (
-            metadata.get("filename", ""),
-            metadata.get("page_number"),
-            metadata.get("section_number"),
-        )
-        if source_key not in seen_sources:
-            seen_sources.add(source_key)
-            citations.append({
-                "filename": metadata.get("filename", "unknown"),
-                "page_number": metadata.get("page_number"),
-                "section_number": metadata.get("section_number"),
-                "paragraph_range": metadata.get("paragraph_range"),
-                "relevance_score": chunk.get("score", 0),
-                "source_text": chunk.get("text", "")[:300],  # First 300 chars for tooltip
-            })
+        citations.append({
+            "filename": metadata.get("filename", "unknown"),
+            "page_number": metadata.get("page_number"),
+            "section_number": metadata.get("section_number"),
+            "paragraph_range": metadata.get("paragraph_range"),
+            "relevance_score": chunk.get("score", 0),
+            "source_text": chunk.get("text", "")[:300],  # First 300 chars for tooltip
+        })
 
     # Stream response
     async def event_stream():

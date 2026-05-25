@@ -18,17 +18,21 @@ export function useTheme() {
   return useContext(ThemeContext);
 }
 
-export default function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const [theme, setTheme] = useState<Theme>("light");
+function getInitialTheme(): Theme {
+  if (typeof window === "undefined") return "light";
+  const stored = localStorage.getItem("theme") as Theme | null;
+  if (stored === "dark" || stored === "light") return stored;
+  if (window.matchMedia("(prefers-color-scheme: dark)").matches) return "dark";
+  return "light";
+}
 
+export default function ThemeProvider({ children }: { children: React.ReactNode }) {
+  const [theme, setTheme] = useState<Theme>(getInitialTheme);
+  const [mounted, setMounted] = useState(false);
+
+  // Mark as mounted to avoid hydration mismatch
   useEffect(() => {
-    // Check localStorage or system preference
-    const stored = localStorage.getItem("theme") as Theme | null;
-    if (stored) {
-      setTheme(stored);
-    } else if (window.matchMedia("(prefers-color-scheme: dark)").matches) {
-      setTheme("dark");
-    }
+    setMounted(true);
   }, []);
 
   useEffect(() => {
@@ -45,9 +49,11 @@ export default function ThemeProvider({ children }: { children: React.ReactNode 
     setTheme((prev) => (prev === "light" ? "dark" : "light"));
   };
 
+  // Prevent flash: apply theme class immediately on mount via inline script
+  // and suppress hydration warning on html element
   return (
     <ThemeContext.Provider value={{ theme, toggleTheme }}>
-      {children}
+      {mounted ? children : <div style={{ visibility: "hidden" }}>{children}</div>}
     </ThemeContext.Provider>
   );
 }

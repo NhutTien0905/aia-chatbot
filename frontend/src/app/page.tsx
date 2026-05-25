@@ -6,7 +6,7 @@ import ChatInterface from "@/components/ChatInterface";
 import DocumentList from "@/components/DocumentList";
 import LoadingIndicator from "@/components/LoadingIndicator";
 import ThemeToggle from "@/components/ThemeToggle";
-import { createSession, UploadedFile } from "@/lib/api";
+import { createSession, getSessionInfo, UploadedFile } from "@/lib/api";
 import { getSessionId, setSessionId, clearSession } from "@/lib/session";
 
 export default function Home() {
@@ -19,6 +19,20 @@ export default function Home() {
     const stored = getSessionId();
     if (stored) {
       setSessionIdState(stored);
+      // Restore files from server
+      getSessionInfo(stored)
+        .then((info) => {
+          if (info.files && info.files.length > 0) {
+            setFiles(info.files);
+            const readyFilenames = info.files
+              .filter((f: UploadedFile) => f.status === "ready")
+              .map((f: UploadedFile) => f.filename);
+            setSelectedFiles(readyFilenames);
+          }
+        })
+        .catch(() => {
+          // Session may not exist on server anymore, that's fine
+        });
     } else {
       createSession()
         .then((id) => {
@@ -59,6 +73,11 @@ export default function Home() {
 
   const handleDeselectAll = () => {
     setSelectedFiles([]);
+  };
+
+  const handleDeleteFile = (filename: string) => {
+    setFiles((prev) => prev.filter((f) => f.filename !== filename));
+    setSelectedFiles((prev) => prev.filter((f) => f !== filename));
   };
 
   const handleNewSession = () => {
@@ -106,9 +125,11 @@ export default function Home() {
         <DocumentList
           files={files}
           selectedFiles={selectedFiles}
+          sessionId={sessionId}
           onToggleFile={handleToggleFile}
           onSelectAll={handleSelectAll}
           onDeselectAll={handleDeselectAll}
+          onDeleteFile={handleDeleteFile}
         />
 
         <div className="mt-auto pt-4 border-t border-gray-200 dark:border-gray-700">

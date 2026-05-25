@@ -118,6 +118,23 @@ function renderContent(content: string, citations?: Citation[]) {
   });
 }
 
+/**
+ * Deduplicate citations for the Sources list display.
+ * Groups citations that share the same file+page+section, showing all reference numbers.
+ */
+function getUniqueSources(citations: Citation[]) {
+  const seen = new Map<string, { citation: Citation; indices: number[] }>();
+  citations.forEach((c, j) => {
+    const key = `${c.filename}|${c.page_number ?? ""}|${c.section_number ?? ""}`;
+    if (seen.has(key)) {
+      seen.get(key)!.indices.push(j + 1);
+    } else {
+      seen.set(key, { citation: c, indices: [j + 1] });
+    }
+  });
+  return Array.from(seen.values());
+}
+
 export default function MessageBubble({ message }: MessageBubbleProps) {
   const isUser = message.role === "user";
   const hasCitations = message.citations && message.citations.length > 0;
@@ -142,10 +159,10 @@ export default function MessageBubble({ message }: MessageBubbleProps) {
           <div className="mt-2 pt-2 border-t border-gray-200 dark:border-gray-600">
             <p className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Sources:</p>
             <div className="flex flex-col gap-1">
-              {message.citations!.map((c, j) => (
+              {getUniqueSources(message.citations!).map(({ citation: c, indices }, j) => (
                 <div key={j} className="flex items-start gap-1.5 text-xs">
                   <span className="inline-flex items-center justify-center font-bold bg-blue-200 dark:bg-blue-800 text-blue-800 dark:text-blue-200 rounded-full min-w-[18px] h-[18px] text-[10px]">
-                    {j + 1}
+                    {indices.join(",")}
                   </span>
                   <span className="text-gray-600 dark:text-gray-300">
                     {c.filename}

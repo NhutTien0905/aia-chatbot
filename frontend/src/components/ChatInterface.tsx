@@ -12,17 +12,52 @@ interface ChatInterfaceProps {
   selectedFiles: string[];
 }
 
+const CHAT_STORAGE_KEY = "chat_history";
+
+function loadChatHistory(sessionId: string): ChatMessage[] {
+  if (typeof window === "undefined") return [];
+  try {
+    const stored = localStorage.getItem(`${CHAT_STORAGE_KEY}_${sessionId}`);
+    if (stored) return JSON.parse(stored);
+  } catch {
+    // ignore parse errors
+  }
+  return [];
+}
+
+function saveChatHistory(sessionId: string, messages: ChatMessage[]) {
+  if (typeof window === "undefined") return;
+  try {
+    localStorage.setItem(`${CHAT_STORAGE_KEY}_${sessionId}`, JSON.stringify(messages));
+  } catch {
+    // ignore quota errors
+  }
+}
+
 export default function ChatInterface({
   sessionId,
   hasDocuments,
   hasSelectedSources,
   selectedFiles,
 }: ChatInterfaceProps) {
-  const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [messages, setMessages] = useState<ChatMessage[]>(() => loadChatHistory(sessionId));
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+
+  // Reload history when sessionId changes
+  useEffect(() => {
+    setMessages(loadChatHistory(sessionId));
+  }, [sessionId]);
+
+  // Persist messages whenever they change (skip empty assistant messages during streaming)
+  useEffect(() => {
+    const toSave = messages.filter((m) => m.content !== "");
+    if (toSave.length > 0) {
+      saveChatHistory(sessionId, toSave);
+    }
+  }, [messages, sessionId]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
