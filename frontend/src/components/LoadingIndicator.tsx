@@ -1,11 +1,8 @@
 "use client";
 
 interface LoadingIndicatorProps {
-  /** Type of loading indicator to display */
   variant?: "dots" | "spinner" | "skeleton";
-  /** Optional text to display alongside the indicator */
   text?: string;
-  /** Size of the indicator */
   size?: "sm" | "md" | "lg";
 }
 
@@ -32,7 +29,7 @@ export default function LoadingIndicator({
         <div
           className={`animate-spin rounded-full border-b-2 border-blue-600 ${spinnerSizes[size]}`}
         />
-        {text && <p className="text-sm text-gray-600">{text}</p>}
+        {text && <p className="text-sm text-gray-600 dark:text-gray-400">{text}</p>}
         <span className="sr-only">Loading...</span>
       </div>
     );
@@ -41,28 +38,29 @@ export default function LoadingIndicator({
   if (variant === "skeleton") {
     return (
       <div className="space-y-2 animate-pulse" role="status" aria-label="Loading content">
-        <div className="h-4 bg-gray-200 rounded w-3/4" />
-        <div className="h-4 bg-gray-200 rounded w-1/2" />
-        <div className="h-4 bg-gray-200 rounded w-5/6" />
-        {text && <p className="text-sm text-gray-600 mt-2">{text}</p>}
+        <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-3/4" />
+        <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-1/2" />
+        <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-5/6" />
+        {text && <p className="text-sm text-gray-600 dark:text-gray-400 mt-2">{text}</p>}
         <span className="sr-only">Loading...</span>
       </div>
     );
   }
 
-  // Default: dots
   return (
     <div className="flex items-center gap-2" role="status" aria-label="Loading">
       <div className="flex space-x-1">
-        <div className={`${sizeClasses[size]} bg-gray-400 rounded-full animate-bounce`} />
         <div
-          className={`${sizeClasses[size]} bg-gray-400 rounded-full animate-bounce [animation-delay:0.1s]`}
+          className={`${sizeClasses[size]} bg-gray-400 dark:bg-gray-500 rounded-full animate-bounce`}
         />
         <div
-          className={`${sizeClasses[size]} bg-gray-400 rounded-full animate-bounce [animation-delay:0.2s]`}
+          className={`${sizeClasses[size]} bg-gray-400 dark:bg-gray-500 rounded-full animate-bounce [animation-delay:0.1s]`}
+        />
+        <div
+          className={`${sizeClasses[size]} bg-gray-400 dark:bg-gray-500 rounded-full animate-bounce [animation-delay:0.2s]`}
         />
       </div>
-      {text && <p className="text-sm text-gray-600">{text}</p>}
+      {text && <p className="text-sm text-gray-600 dark:text-gray-400">{text}</p>}
       <span className="sr-only">Loading...</span>
     </div>
   );

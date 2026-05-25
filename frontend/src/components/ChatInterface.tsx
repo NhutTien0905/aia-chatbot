@@ -28,11 +28,9 @@ export default function ChatInterface({ sessionId, hasDocuments }: ChatInterface
     const question = input.trim();
     setInput("");
 
-    // Add user message
     setMessages((prev) => [...prev, { role: "user", content: question }]);
     setIsLoading(true);
 
-    // Add empty assistant message for streaming
     setMessages((prev) => [...prev, { role: "assistant", content: "", citations: [] }]);
 
     try {
@@ -63,7 +61,6 @@ export default function ChatInterface({ sessionId, hasDocuments }: ChatInterface
         }
       }
 
-      // Final update with citations
       setMessages((prev) => {
         const updated = [...prev];
         updated[updated.length - 1] = { role: "assistant", content, citations };
@@ -85,7 +82,7 @@ export default function ChatInterface({ sessionId, hasDocuments }: ChatInterface
   };
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col h-full bg-white dark:bg-gray-900">
       {/* Messages */}
       <div
         className="flex-1 overflow-y-auto p-4 space-y-4"
@@ -93,7 +90,7 @@ export default function ChatInterface({ sessionId, hasDocuments }: ChatInterface
         aria-label="Chat messages"
       >
         {messages.length === 0 && (
-          <div className="text-center text-gray-500 mt-8">
+          <div className="text-center text-gray-500 dark:text-gray-400 mt-8">
             <p className="text-lg font-medium">Insurance Document Assistant</p>
             <p className="text-sm mt-2">
               {hasDocuments
@@ -109,7 +106,7 @@ export default function ChatInterface({ sessionId, hasDocuments }: ChatInterface
 
         {isLoading && messages[messages.length - 1]?.content === "" && (
           <div className="flex justify-start">
-            <div className="bg-gray-100 rounded-lg px-4 py-2">
+            <div className="bg-gray-100 dark:bg-gray-700 rounded-lg px-4 py-2">
               <LoadingIndicator variant="dots" size="md" />
             </div>
           </div>
@@ -119,7 +116,11 @@ export default function ChatInterface({ sessionId, hasDocuments }: ChatInterface
       </div>
 
       {/* Input */}
-      <form onSubmit={handleSubmit} className="border-t p-4" aria-label="Send a message">
+      <form
+        onSubmit={handleSubmit}
+        className="border-t border-gray-200 dark:border-gray-700 p-4 bg-white dark:bg-gray-800"
+        aria-label="Send a message"
+      >
         <div className="flex gap-2">
           <input
             ref={inputRef}
@@ -129,7 +130,7 @@ export default function ChatInterface({ sessionId, hasDocuments }: ChatInterface
             placeholder={hasDocuments ? "Ask about your documents..." : "Upload documents first..."}
             disabled={!hasDocuments || isLoading}
             aria-label="Message input"
-            className="flex-1 border rounded-lg px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
+            className="flex-1 border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2 text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 dark:disabled:bg-gray-800 disabled:cursor-not-allowed"
           />
           <button
             type="submit"

@@ -4,6 +4,7 @@ plan.md
 Secure Multi-Modal Insurance Assistant Challenge.md
 .vscode
 *.sqlite3
+*.bin
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[codz]

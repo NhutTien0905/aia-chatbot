@@ -43,6 +43,8 @@ A RAG-based (Retrieval-Augmented Generation) chatbot that allows users to upload
 - **Source citations**: Every answer includes references to source document, page, and section
 - **Session isolation**: Each user session has its own document collection
 - **"I don't know" handling**: LLM refuses to answer when context is insufficient
+- **Dark/Light mode**: Toggle between dark and light themes (persisted in localStorage)
+- **Document management**: Upload and delete individual documents per session
 - **Mobile-responsive UI**: Works on desktop, tablet, and mobile
 - **Input validation**: File type, size, and content validation on both client and server
 - **Security**: Filename sanitization, session ID validation, CORS protection
@@ -148,6 +150,7 @@ Frontend `.env.local`:
 | POST | `/api/session/create` | Create new session |
 | GET | `/api/session/{id}/info` | Get session info and files |
 | DELETE | `/api/session/{id}` | Delete session and data |
+| DELETE | `/api/session/{id}/document/{filename}` | Delete a specific document |
 | POST | `/api/upload` | Upload documents (multipart) |
 | POST | `/api/chat` | Chat with streaming response (SSE) |
 
@@ -199,8 +202,10 @@ aia-chatbot/
 │   │   │   ├── ChatInterface.tsx # Chat UI with streaming
 │   │   │   ├── MessageBubble.tsx # Individual message component
 │   │   │   ├── FileUpload.tsx    # Drag-and-drop upload
-│   │   │   ├── DocumentList.tsx  # Uploaded files list
-│   │   │   └── LoadingIndicator.tsx # Reusable loading states
+│   │   │   ├── DocumentList.tsx  # Uploaded files list with delete
+│   │   │   ├── LoadingIndicator.tsx # Reusable loading states
+│   │   │   ├── ThemeProvider.tsx # Dark/Light mode context
+│   │   │   └── ThemeToggle.tsx   # Theme switch button
 │   │   └── lib/
 │   │       ├── api.ts           # Backend API client
 │   │       └── session.ts       # Session management

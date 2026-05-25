@@ -158,6 +158,36 @@ def delete_collection(session_id: str) -> bool:
         return False
 
 
+def delete_document_by_filename(session_id: str, filename: str) -> int:
+    """Delete all chunks belonging to a specific file from a session's collection.
+    Returns the number of chunks deleted."""
+    client = get_chroma_client()
+    collection_name = get_collection_name(session_id)
+
+    try:
+        collection = client.get_collection(name=collection_name)
+
+        # Find all IDs with matching filename metadata
+        results = collection.get(
+            where={"filename": filename},
+            include=["metadatas"]
+        )
+
+        if not results["ids"]:
+            return 0
+
+        ids_to_delete = results["ids"]
+        collection.delete(ids=ids_to_delete)
+        logger.info(
+            f"Deleted {len(ids_to_delete)} chunks for file '{filename}' "
+            f"from session {session_id[:8]}..."
+        )
+        return len(ids_to_delete)
+    except Exception as e:
+        logger.error(f"Failed to delete document '{filename}': {e}")
+        return 0
+
+
 def get_all_documents(session_id: str) -> List[Dict[str, Any]]:
     """Get all documents in a session's collection (for BM25 indexing)."""
     client = get_chroma_client()

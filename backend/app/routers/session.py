@@ -2,7 +2,7 @@
 import logging
 from fastapi import APIRouter, Request, HTTPException
 from ..models.schemas import SessionInfo, UploadedFile, HealthResponse
-from ..services.vectorstore import delete_collection, get_chroma_client, get_collection_name
+from ..services.vectorstore import delete_collection, delete_document_by_filename, get_chroma_client, get_collection_name
 from ..utils.sanitize import validate_session_id
 import uuid
 
@@ -71,3 +71,25 @@ async def delete_session(session_id: str):
     success = delete_collection(session_id)
     logger.info(f"Session {session_id[:8]}... deleted: {success}")
     return {"success": success, "message": "Session deleted" if success else "Session not found"}
+
+
+@router.delete("/session/{session_id}/document/{filename:path}")
+async def delete_document(session_id: str, filename: str):
+    """Delete a specific document from a session."""
+    if not validate_session_id(session_id):
+        raise HTTPException(status_code=400, detail="Invalid session ID format")
+
+    if not filename or len(filename) > 255:
+        raise HTTPException(status_code=400, detail="Invalid filename")
+
+    deleted_count = delete_document_by_filename(session_id, filename)
+    if deleted_count > 0:
+        return {
+            "success": True,
+            "message": f"Deleted {deleted_count} chunks for '{filename}'",
+        }
+    else:
+        return {
+            "success": False,
+            "message": f"No chunks found for '{filename}'",
+        }

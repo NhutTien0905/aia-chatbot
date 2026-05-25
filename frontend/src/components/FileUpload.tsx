@@ -83,28 +83,48 @@ export default function FileUpload({ sessionId, onUploadComplete }: FileUploadPr
   return (
     <div className="w-full">
       <div
-        onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
+        onDragOver={(e) => {
+          e.preventDefault();
+          setIsDragging(true);
+        }}
         onDragLeave={() => setIsDragging(false)}
         onDrop={handleDrop}
         className={`border-2 border-dashed rounded-lg p-6 text-center transition-colors cursor-pointer
-          ${isDragging ? "border-blue-500 bg-blue-50" : "border-gray-300 hover:border-gray-400"}
+          ${
+            isDragging
+              ? "border-blue-500 bg-blue-50 dark:bg-blue-900/20"
+              : "border-gray-300 dark:border-gray-600 hover:border-gray-400 dark:hover:border-gray-500"
+          }
           ${isUploading ? "opacity-50 pointer-events-none" : ""}`}
         onClick={() => document.getElementById("file-input")?.click()}
       >
         {isUploading ? (
           <div className="flex flex-col items-center gap-2">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600" />
-            <p className="text-sm text-gray-600">Processing documents...</p>
+            <p className="text-sm text-gray-600 dark:text-gray-400">Processing documents...</p>
           </div>
         ) : (
           <div className="flex flex-col items-center gap-2">
-            <svg className="w-10 h-10 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+            <svg
+              className="w-10 h-10 text-gray-400 dark:text-gray-500"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
+              />
             </svg>
-            <p className="text-sm text-gray-600">
-              <span className="font-medium text-blue-600">Click to upload</span> or drag and drop
+            <p className="text-sm text-gray-600 dark:text-gray-400">
+              <span className="font-medium text-blue-600 dark:text-blue-400">Click to upload</span>{" "}
+              or drag and drop
             </p>
-            <p className="text-xs text-gray-500">PDF, DOCX, PNG, JPG (max 5MB, max 2 files)</p>
+            <p className="text-xs text-gray-500 dark:text-gray-500">
+              PDF, DOCX, PNG, JPG (max 5MB, max 2 files)
+            </p>
           </div>
         )}
       </div>
@@ -115,10 +135,9 @@ export default function FileUpload({ sessionId, onUploadComplete }: FileUploadPr
         accept=".pdf,.docx,.png,.jpg,.jpeg"
         onChange={handleFileInput}
         className="hidden"
+        aria-label="File upload input"
       />
-      {error && (
-        <p className="mt-2 text-sm text-red-600">{error}</p>
-      )}
+      {error && <p className="mt-2 text-sm text-red-600 dark:text-red-400">{error}</p>}
     </div>
   );
 }

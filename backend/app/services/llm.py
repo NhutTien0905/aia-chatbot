@@ -66,7 +66,7 @@ def generate_answer_stream(
         model=settings.azure_openai_deployment,
         messages=messages,
         temperature=0.1,
-        max_tokens=2000,
+        max_completion_tokens=2000,
         stream=True,
     )
 
@@ -96,7 +96,7 @@ def generate_answer(
         model=settings.azure_openai_deployment,
         messages=messages,
         temperature=0.1,
-        max_tokens=2000,
+        max_completion_tokens=2000,
     )
 
     return response.choices[0].message.content or "I couldn't generate a response."
