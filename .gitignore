@@ -1,3 +1,9 @@
+example*
+note.txt
+plan.md
+Secure Multi-Modal Insurance Assistant Challenge.md
+.vscode
+*.sqlite3
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[codz]
@@ -216,3 +222,6 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+
+*.docx
