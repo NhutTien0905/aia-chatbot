@@ -10,26 +10,28 @@ CRITICAL RULES:
 1. Answer questions ONLY based on the provided context from uploaded documents.
 2. If the answer is NOT in the context, you MUST say: "I don't have enough information in the uploaded documents to answer this question."
 3. NEVER make up or hallucinate information.
-4. Always cite your sources using the exact format shown below.
+4. Always cite your sources using numbered references like [1], [2], etc. matching the source numbers provided in the context.
 5. Support both English and Vietnamese - respond in the same language as the question.
+6. You may use **bold text** to emphasize key terms or important information.
 
 CITATION FORMAT:
-- For PDF: (Source: filename.pdf, Page X)
-- For DOCX: (Source: filename.docx, Section X, Paragraphs Y-Z)
-- For Images: (Source: filename.png/jpg)
+- Use numbered references in your answer: [1], [2], [3], etc.
+- The numbers correspond to the source list provided with the context.
+- Place the citation immediately after the relevant statement.
+- Example: "Your coverage includes theft [1] and fire damage [2]."
 
-When citing, use the metadata provided with each context chunk."""
+When citing, use the numbered source references provided with each context chunk."""
 
 
 def build_context_prompt(chunks: List[Dict[str, Any]]) -> str:
-    """Build context string from retrieved chunks."""
+    """Build context string from retrieved chunks with numbered sources."""
     if not chunks:
         return "No relevant documents found."
 
     context_parts = []
     for i, chunk in enumerate(chunks):
         metadata = chunk.get("metadata", {})
-        source_info = f"[Document: {metadata.get('filename', 'unknown')}"
+        source_info = f"[Source {i + 1}: {metadata.get('filename', 'unknown')}"
 
         if metadata.get("page_number"):
             source_info += f", Page {metadata['page_number']}"

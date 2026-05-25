@@ -8,9 +8,16 @@ import LoadingIndicator from "./LoadingIndicator";
 interface ChatInterfaceProps {
   sessionId: string;
   hasDocuments: boolean;
+  hasSelectedSources: boolean;
+  selectedFiles: string[];
 }
 
-export default function ChatInterface({ sessionId, hasDocuments }: ChatInterfaceProps) {
+export default function ChatInterface({
+  sessionId,
+  hasDocuments,
+  hasSelectedSources,
+  selectedFiles,
+}: ChatInterfaceProps) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -21,9 +28,17 @@ export default function ChatInterface({ sessionId, hasDocuments }: ChatInterface
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
+  const canSend = hasDocuments && hasSelectedSources;
+
+  const getPlaceholder = () => {
+    if (!hasDocuments) return "Upload documents first...";
+    if (!hasSelectedSources) return "Select sources from the sidebar to ask questions...";
+    return "Ask about your documents...";
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!input.trim() || isLoading) return;
+    if (!input.trim() || isLoading || !canSend) return;
 
     const question = input.trim();
     setInput("");
@@ -37,7 +52,7 @@ export default function ChatInterface({ sessionId, hasDocuments }: ChatInterface
       let citations: Citation[] = [];
       let content = "";
 
-      for await (const event of streamChat(question, sessionId)) {
+      for await (const event of streamChat(question, sessionId, selectedFiles)) {
         if (event.type === "citations") {
           citations = event.data as Citation[];
         } else if (event.type === "token") {
@@ -48,6 +63,18 @@ export default function ChatInterface({ sessionId, hasDocuments }: ChatInterface
               role: "assistant",
               content,
               citations,
+            };
+            return updated;
+          });
+        } else if (event.type === "hide_citations") {
+          // LLM couldn't find the answer — hide citations
+          citations = [];
+          setMessages((prev) => {
+            const updated = [...prev];
+            updated[updated.length - 1] = {
+              role: "assistant",
+              content,
+              citations: [],
             };
             return updated;
           });
@@ -93,9 +120,11 @@ export default function ChatInterface({ sessionId, hasDocuments }: ChatInterface
           <div className="text-center text-gray-500 dark:text-gray-400 mt-8">
             <p className="text-lg font-medium">Insurance Document Assistant</p>
             <p className="text-sm mt-2">
-              {hasDocuments
-                ? "Ask questions about your uploaded documents"
-                : "Upload documents to get started"}
+              {!hasDocuments
+                ? "Upload documents to get started"
+                : !hasSelectedSources
+                ? "Select sources from the sidebar to start asking questions"
+                : "Ask questions about your selected documents"}
             </p>
           </div>
         )}
@@ -115,6 +144,17 @@ export default function ChatInterface({ sessionId, hasDocuments }: ChatInterface
         <div ref={messagesEndRef} />
       </div>
 
+      {/* Selected sources indicator */}
+      {hasDocuments && (
+        <div className="px-4 py-1 border-t border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/50">
+          <p className="text-xs text-gray-500 dark:text-gray-400">
+            {hasSelectedSources
+              ? `Searching in ${selectedFiles.length} source${selectedFiles.length > 1 ? "s" : ""}`
+              : "No sources selected"}
+          </p>
+        </div>
+      )}
+
       {/* Input */}
       <form
         onSubmit={handleSubmit}
@@ -127,14 +167,14 @@ export default function ChatInterface({ sessionId, hasDocuments }: ChatInterface
             type="text"
             value={input}
             onChange={(e) => setInput(e.target.value)}
-            placeholder={hasDocuments ? "Ask about your documents..." : "Upload documents first..."}
-            disabled={!hasDocuments || isLoading}
+            placeholder={getPlaceholder()}
+            disabled={!canSend || isLoading}
             aria-label="Message input"
             className="flex-1 border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2 text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 dark:disabled:bg-gray-800 disabled:cursor-not-allowed"
           />
           <button
             type="submit"
-            disabled={!hasDocuments || isLoading || !input.trim()}
+            disabled={!canSend || isLoading || !input.trim()}
             aria-label="Send message"
             className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >

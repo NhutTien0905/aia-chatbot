@@ -6,12 +6,13 @@ import ChatInterface from "@/components/ChatInterface";
 import DocumentList from "@/components/DocumentList";
 import LoadingIndicator from "@/components/LoadingIndicator";
 import ThemeToggle from "@/components/ThemeToggle";
-import { createSession, deleteDocument, UploadedFile } from "@/lib/api";
+import { createSession, UploadedFile } from "@/lib/api";
 import { getSessionId, setSessionId, clearSession } from "@/lib/session";
 
 export default function Home() {
   const [sessionId, setSessionIdState] = useState<string>("");
   const [files, setFiles] = useState<UploadedFile[]>([]);
+  const [selectedFiles, setSelectedFiles] = useState<string[]>([]);
   const [showUpload, setShowUpload] = useState(true);
 
   useEffect(() => {
@@ -34,16 +35,30 @@ export default function Home() {
 
   const handleUploadComplete = (uploadedFiles: UploadedFile[]) => {
     setFiles((prev) => [...prev, ...uploadedFiles]);
+    // Auto-select newly uploaded ready files
+    const newReady = uploadedFiles
+      .filter((f) => f.status === "ready")
+      .map((f) => f.filename);
+    setSelectedFiles((prev) => [...prev, ...newReady]);
   };
 
-  const handleDeleteFile = async (filename: string) => {
-    try {
-      await deleteDocument(sessionId, filename);
-      setFiles((prev) => prev.filter((f) => f.filename !== filename));
-    } catch {
-      // Silently fail — file may already be removed
-      setFiles((prev) => prev.filter((f) => f.filename !== filename));
-    }
+  const handleToggleFile = (filename: string) => {
+    setSelectedFiles((prev) =>
+      prev.includes(filename)
+        ? prev.filter((f) => f !== filename)
+        : [...prev, filename]
+    );
+  };
+
+  const handleSelectAll = () => {
+    const readyFilenames = files
+      .filter((f) => f.status === "ready")
+      .map((f) => f.filename);
+    setSelectedFiles(readyFilenames);
+  };
+
+  const handleDeselectAll = () => {
+    setSelectedFiles([]);
   };
 
   const handleNewSession = () => {
@@ -52,6 +67,7 @@ export default function Home() {
   };
 
   const hasDocuments = files.some((f) => f.status === "ready");
+  const hasSelectedSources = selectedFiles.length > 0;
 
   if (!sessionId) {
     return (
@@ -87,7 +103,13 @@ export default function Home() {
         </div>
 
         <FileUpload sessionId={sessionId} onUploadComplete={handleUploadComplete} />
-        <DocumentList files={files} onDeleteFile={handleDeleteFile} />
+        <DocumentList
+          files={files}
+          selectedFiles={selectedFiles}
+          onToggleFile={handleToggleFile}
+          onSelectAll={handleSelectAll}
+          onDeselectAll={handleDeselectAll}
+        />
 
         <div className="mt-auto pt-4 border-t border-gray-200 dark:border-gray-700">
           <p className="text-xs text-gray-400 dark:text-gray-500">
@@ -122,7 +144,12 @@ export default function Home() {
           <ThemeToggle />
         </div>
         <div className="flex-1 min-h-0">
-          <ChatInterface sessionId={sessionId} hasDocuments={hasDocuments} />
+          <ChatInterface
+            sessionId={sessionId}
+            hasDocuments={hasDocuments}
+            hasSelectedSources={hasSelectedSources}
+            selectedFiles={selectedFiles}
+          />
         </div>
       </section>
     </main>

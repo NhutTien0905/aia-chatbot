@@ -1,5 +1,5 @@
 """Hybrid retrieval service combining semantic search, BM25, and reranking."""
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Optional
 from .vectorstore import search_documents, get_all_documents
 from .bm25 import search_bm25, build_bm25_index
 from .reranker import rerank_documents
@@ -48,11 +48,14 @@ def reciprocal_rank_fusion(
 def hybrid_search(
     session_id: str,
     query: str,
-    top_k: int = 5
+    top_k: int = 5,
+    filter_filenames: Optional[List[str]] = None
 ) -> List[Dict[str, Any]]:
     """
     Perform hybrid search combining semantic (ChromaDB) and BM25,
     then rerank with Cohere Rerank v4 for improved precision.
+
+    If filter_filenames is provided, only chunks from those files are considered.
     """
     # Ensure BM25 index is built
     all_docs = get_all_documents(session_id)
@@ -62,11 +65,20 @@ def hybrid_search(
     # Retrieve more candidates for reranking (top_k * 2)
     candidate_k = top_k * 2
 
-    # Semantic search
-    semantic_results = search_documents(session_id, query, top_k=candidate_k)
+    # Semantic search (with optional metadata filter)
+    semantic_results = search_documents(
+        session_id, query, top_k=candidate_k, filter_filenames=filter_filenames
+    )
 
     # BM25 search
     bm25_results = search_bm25(session_id, query, top_k=candidate_k)
+
+    # Filter BM25 results by filename if specified
+    if filter_filenames and bm25_results:
+        bm25_results = [
+            r for r in bm25_results
+            if r.get("metadata", {}).get("filename") in filter_filenames
+        ]
 
     # If only one source has results, use that
     if not semantic_results and not bm25_results:

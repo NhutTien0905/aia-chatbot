@@ -4,11 +4,23 @@ import { UploadedFile } from "@/lib/api";
 
 interface DocumentListProps {
   files: UploadedFile[];
-  onDeleteFile?: (filename: string) => void;
+  selectedFiles: string[];
+  onToggleFile: (filename: string) => void;
+  onSelectAll: () => void;
+  onDeselectAll: () => void;
 }
 
-export default function DocumentList({ files, onDeleteFile }: DocumentListProps) {
+export default function DocumentList({
+  files,
+  selectedFiles,
+  onToggleFile,
+  onSelectAll,
+  onDeselectAll,
+}: DocumentListProps) {
   if (files.length === 0) return null;
+
+  const readyFiles = files.filter((f) => f.status === "ready");
+  const allSelected = readyFiles.length > 0 && readyFiles.every((f) => selectedFiles.includes(f.filename));
 
   const getStatusIcon = (status: string) => {
     switch (status) {
@@ -32,45 +44,72 @@ export default function DocumentList({ files, onDeleteFile }: DocumentListProps)
 
   return (
     <div className="space-y-2">
-      <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300">
-        Uploaded Documents
-      </h3>
-      <div className="space-y-1">
-        {files.map((file, i) => (
-          <div
-            key={i}
-            className="flex items-center gap-2 p-2 bg-gray-50 dark:bg-gray-700/50 rounded text-sm group"
+      <div className="flex items-center justify-between">
+        <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300">
+          Sources
+        </h3>
+        {readyFiles.length > 1 && (
+          <button
+            onClick={allSelected ? onDeselectAll : onSelectAll}
+            className="text-xs text-blue-600 dark:text-blue-400 hover:underline"
           >
-            <span>{getFileIcon(file.file_type)}</span>
-            <span className="flex-1 truncate text-gray-900 dark:text-gray-100">
-              {file.filename}
-            </span>
-            {getStatusIcon(file.status)}
-            {file.num_chunks > 0 && (
-              <span className="text-xs text-gray-400 dark:text-gray-500">
-                {file.num_chunks} chunks
+            {allSelected ? "Deselect all" : "Select all"}
+          </button>
+        )}
+      </div>
+
+      {selectedFiles.length === 0 && readyFiles.length > 0 && (
+        <p className="text-xs text-amber-600 dark:text-amber-400">
+          Select at least one source to ask questions
+        </p>
+      )}
+
+      <div className="space-y-1">
+        {files.map((file, i) => {
+          const isReady = file.status === "ready";
+          const isSelected = selectedFiles.includes(file.filename);
+
+          return (
+            <div
+              key={i}
+              className={`flex items-center gap-2 p-2 rounded text-sm cursor-pointer transition-colors ${
+                isSelected
+                  ? "bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-700"
+                  : "bg-gray-50 dark:bg-gray-700/50 border border-transparent"
+              } ${isReady ? "hover:bg-blue-50 dark:hover:bg-blue-900/20" : "opacity-60"}`}
+              onClick={() => isReady && onToggleFile(file.filename)}
+            >
+              {isReady && (
+                <input
+                  type="checkbox"
+                  checked={isSelected}
+                  onChange={() => onToggleFile(file.filename)}
+                  onClick={(e) => e.stopPropagation()}
+                  className="h-3.5 w-3.5 rounded border-gray-300 dark:border-gray-600 text-blue-600 focus:ring-blue-500"
+                  aria-label={`Select ${file.filename} as source`}
+                />
+              )}
+              <span>{getFileIcon(file.file_type)}</span>
+              <span className="flex-1 truncate text-gray-900 dark:text-gray-100">
+                {file.filename}
               </span>
-            )}
-            {onDeleteFile && file.status === "ready" && (
-              <button
-                onClick={() => onDeleteFile(file.filename)}
-                className="opacity-0 group-hover:opacity-100 text-red-400 hover:text-red-600 dark:text-red-500 dark:hover:text-red-400 transition-opacity text-xs"
-                aria-label={`Delete ${file.filename}`}
-                title="Remove file"
-              >
-                ✕
-              </button>
-            )}
-            {file.error_message && (
-              <span
-                className="text-xs text-red-500 dark:text-red-400 truncate max-w-[100px]"
-                title={file.error_message}
-              >
-                {file.error_message}
-              </span>
-            )}
-          </div>
-        ))}
+              {!isReady && getStatusIcon(file.status)}
+              {file.num_chunks > 0 && (
+                <span className="text-xs text-gray-400 dark:text-gray-500">
+                  {file.num_chunks}
+                </span>
+              )}
+              {file.error_message && (
+                <span
+                  className="text-xs text-red-500 dark:text-red-400 truncate max-w-[80px]"
+                  title={file.error_message}
+                >
+                  {file.error_message}
+                </span>
+              )}
+            </div>
+          );
+        })}
       </div>
     </div>
   );

@@ -113,9 +113,10 @@ def add_documents(
 def search_documents(
     session_id: str,
     query: str,
-    top_k: int = 5
+    top_k: int = 5,
+    filter_filenames: Optional[List[str]] = None
 ) -> List[Dict[str, Any]]:
-    """Search documents in a session's collection."""
+    """Search documents in a session's collection, optionally filtered by filenames."""
     client = get_chroma_client()
     collection_name = get_collection_name(session_id)
 
@@ -127,10 +128,19 @@ def search_documents(
     # Get query embedding
     query_embedding = get_embedding(query)
 
+    # Build where filter for filename
+    where_filter = None
+    if filter_filenames and len(filter_filenames) > 0:
+        if len(filter_filenames) == 1:
+            where_filter = {"filename": filter_filenames[0]}
+        else:
+            where_filter = {"filename": {"$in": filter_filenames}}
+
     # Search
     results = collection.query(
         query_embeddings=[query_embedding],
         n_results=top_k,
+        where=where_filter,
         include=["documents", "metadatas", "distances"]
     )
 

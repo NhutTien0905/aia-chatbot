@@ -38,6 +38,7 @@ class UploadResponse(BaseModel):
 class ChatRequest(BaseModel):
     question: str = Field(..., min_length=1, max_length=2000)
     session_id: str
+    selected_files: Optional[List[str]] = None  # Filter retrieval to these files only
 
 
 class Citation(BaseModel):
