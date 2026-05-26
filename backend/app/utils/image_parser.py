@@ -3,19 +3,22 @@ from typing import List, Dict, Any
 from datetime import datetime
 from PIL import Image
 import io
+import torch
 import numpy as np
 
 
 # Global reader instance (lazy loaded)
 _reader = None
 
+# check CUDA is available or not
+is_gpu = torch.cuda.is_available()
 
 def _get_reader():
     """Lazy load EasyOCR reader."""
     global _reader
     if _reader is None:
         import easyocr
-        _reader = easyocr.Reader(["en", "vi"], gpu=False)
+        _reader = easyocr.Reader(["en", "vi"], gpu=is_gpu)
     return _reader
 
 
