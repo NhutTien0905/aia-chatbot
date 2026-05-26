@@ -146,13 +146,13 @@ export default function MessageBubble({ message }: MessageBubbleProps) {
       aria-label={`${isUser ? "You" : "Assistant"} said`}
     >
       <div
-        className={`max-w-[85%] md:max-w-[70%] rounded-lg px-4 py-2 ${
+        className={`max-w-[85%] md:max-w-[70%] rounded-lg px-4 py-2 overflow-hidden ${
           isUser
             ? "bg-blue-600 text-white"
             : "bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-gray-100"
         }`}
       >
-        <div className="whitespace-pre-wrap text-sm leading-relaxed">
+        <div className="whitespace-pre-wrap text-sm leading-relaxed break-words overflow-wrap-anywhere">
           {isUser ? message.content : renderContent(message.content, message.citations)}
         </div>
         {hasCitations && (
@@ -164,7 +164,7 @@ export default function MessageBubble({ message }: MessageBubbleProps) {
                   <span className="inline-flex items-center justify-center font-bold bg-blue-200 dark:bg-blue-800 text-blue-800 dark:text-blue-200 rounded-full min-w-[18px] h-[18px] text-[10px]">
                     {indices.join(",")}
                   </span>
-                  <span className="text-gray-600 dark:text-gray-300">
+                  <span className="text-gray-600 dark:text-gray-300 break-all">
                     {c.filename}
                     {c.page_number ? `, Page ${c.page_number}` : ""}
                     {c.section_number ? `, Section ${c.section_number}` : ""}

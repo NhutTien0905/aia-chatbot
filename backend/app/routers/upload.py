@@ -30,11 +30,32 @@ async def upload_documents(
     if not validate_session_id(session_id):
         raise HTTPException(status_code=400, detail="Invalid session ID format")
 
-    # Validate number of files
+    # Validate number of files in this upload
     if len(files) > settings.max_files_per_session:
         raise HTTPException(
             status_code=400,
-            detail=f"Maximum {settings.max_files_per_session} files allowed per upload"
+            detail=f"Maximum {settings.max_files_per_session} files allowed per session"
+        )
+
+    # Check total files already in session
+    from ..services.vectorstore import get_chroma_client, get_collection_name
+    try:
+        client = get_chroma_client()
+        collection_name = get_collection_name(session_id)
+        collection = client.get_collection(name=collection_name)
+        results = collection.get(include=["metadatas"])
+        existing_filenames = set()
+        if results["metadatas"]:
+            for meta in results["metadatas"]:
+                existing_filenames.add(meta.get("filename", ""))
+        existing_count = len(existing_filenames)
+    except Exception:
+        existing_count = 0
+
+    if existing_count + len(files) > settings.max_files_per_session:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Maximum {settings.max_files_per_session} files per session. You already have {existing_count} file(s)."
         )
 
     processed_files: List[UploadedFile] = []

@@ -6,9 +6,10 @@ import { uploadFiles, UploadedFile } from "@/lib/api";
 interface FileUploadProps {
   sessionId: string;
   onUploadComplete: (files: UploadedFile[]) => void;
+  currentFileCount: number;
 }
 
-export default function FileUpload({ sessionId, onUploadComplete }: FileUploadProps) {
+export default function FileUpload({ sessionId, onUploadComplete, currentFileCount }: FileUploadProps) {
   const [isDragging, setIsDragging] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -25,7 +26,10 @@ export default function FileUpload({ sessionId, onUploadComplete }: FileUploadPr
 
   const validateFiles = (files: File[]): string | null => {
     if (files.length > MAX_FILES) {
-      return `Maximum ${MAX_FILES} files allowed`;
+      return `Maximum ${MAX_FILES} files allowed per session`;
+    }
+    if (currentFileCount + files.length > MAX_FILES) {
+      return `Maximum ${MAX_FILES} files per session. You already have ${currentFileCount} file(s).`;
     }
     for (const file of files) {
       if (!ALLOWED_TYPES.includes(file.type)) {
@@ -80,28 +84,53 @@ export default function FileUpload({ sessionId, onUploadComplete }: FileUploadPr
     e.target.value = "";
   };
 
+  const isMaxReached = currentFileCount >= MAX_FILES;
+
   return (
     <div className="w-full">
       <div
         onDragOver={(e) => {
           e.preventDefault();
-          setIsDragging(true);
+          if (!isMaxReached) setIsDragging(true);
         }}
         onDragLeave={() => setIsDragging(false)}
-        onDrop={handleDrop}
-        className={`border-2 border-dashed rounded-lg p-6 text-center transition-colors cursor-pointer
+        onDrop={isMaxReached ? undefined : handleDrop}
+        className={`border-2 border-dashed rounded-lg p-6 text-center transition-colors
+          ${isMaxReached ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}
           ${
             isDragging
               ? "border-blue-500 bg-blue-50 dark:bg-blue-900/20"
               : "border-gray-300 dark:border-gray-600 hover:border-gray-400 dark:hover:border-gray-500"
           }
           ${isUploading ? "opacity-50 pointer-events-none" : ""}`}
-        onClick={() => document.getElementById("file-input")?.click()}
+        onClick={() => !isMaxReached && document.getElementById("file-input")?.click()}
       >
         {isUploading ? (
           <div className="flex flex-col items-center gap-2">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600" />
             <p className="text-sm text-gray-600 dark:text-gray-400">Processing documents...</p>
+          </div>
+        ) : isMaxReached ? (
+          <div className="flex flex-col items-center gap-2">
+            <svg
+              className="w-10 h-10 text-gray-400 dark:text-gray-500"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M5 13l4 4L19 7"
+              />
+            </svg>
+            <p className="text-sm text-gray-600 dark:text-gray-400">
+              Maximum {MAX_FILES} files reached
+            </p>
+            <p className="text-xs text-gray-500 dark:text-gray-500">
+              Delete a file to upload a new one
+            </p>
           </div>
         ) : (
           <div className="flex flex-col items-center gap-2">

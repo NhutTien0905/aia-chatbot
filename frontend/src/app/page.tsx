@@ -121,7 +121,7 @@ export default function Home() {
           </div>
         </div>
 
-        <FileUpload sessionId={sessionId} onUploadComplete={handleUploadComplete} />
+        <FileUpload sessionId={sessionId} onUploadComplete={handleUploadComplete} currentFileCount={files.filter(f => f.status === "ready").length} />
         <DocumentList
           files={files}
           selectedFiles={selectedFiles}
@@ -150,7 +150,7 @@ export default function Home() {
       <section
         className={`${
           !showUpload ? "block" : "hidden md:block"
-        } flex-1 flex flex-col h-screen md:h-auto`}
+        } flex-1 flex flex-col h-screen md:h-auto min-w-0`}
         aria-label="Chat section"
       >
         <div className="md:hidden flex items-center justify-between p-3 border-b border-gray-200 dark:border-gray-700">
